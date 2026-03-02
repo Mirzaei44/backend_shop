@@ -215,4 +215,4 @@ class OrderSerializer(serializers.ModelSerializer):
 def demo_dashboard(request):
     # NOTE: This is an absolute path. It works locally but is not portable.
     # In production you'd normally use "shop/demo.html" and rely on template loaders.
-    return render(request, "/Users/mohamadmirzaei/Desktop/2026/shop/templates/shop/demo.html")
+    return render(request, "shop/demo.html")
