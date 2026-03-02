@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Backend Demo Dashboard</title>
+
+  <style>
+    /* Theme tokens: colors, spacing, typography */
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --border: rgba(255,255,255,.10);
+      --text:#EAF0FF;
+      --muted: rgba(234,240,255,.72);
+      --green:#34D399;
+      --yellow:#FBBF24;
+      --red:#FB7185;
+      --blue:#60A5FA;
+      --purple:#A78BFA;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    /* Basic reset */
+    *{box-sizing:border-box}
+
+    /* Page background + global typography */
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(900px 600px at 15% 10%, rgba(167,139,250,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 20%, rgba(96,165,250,.16), transparent 60%),
+        radial-gradient(900px 600px at 40% 110%, rgba(52,211,153,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* Main container */
+    .wrap{max-width:1200px;margin:0 auto;padding:26px 18px 60px;}
+
+    /* Sticky top header */
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:18px 18px;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      position:sticky;top:14px;z-index:10;
+      backdrop-filter: blur(12px);
+    }
+
+    /* Brand block (logo + title) */
+    .brand{display:flex;align-items:center;gap:12px;}
+
+    /* Decorative logo (pure CSS) */
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: linear-gradient(135deg, rgba(167,139,250,.8), rgba(96,165,250,.7), rgba(52,211,153,.6));
+      box-shadow: 0 14px 40px rgba(96,165,250,.18);
+      position:relative;
+    }
+    .logo:after{
+      content:"";
+      position:absolute;inset:2px;border-radius:12px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.45), transparent 55%);
+      opacity:.8;
+    }
+
+    /* Title + subtitle */
+    h1{font-size:18px;margin:0;letter-spacing:.2px}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+
+    /* Right side status chips */
+    .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+    .chip{
+      font-size:12px;padding:8px 10px;border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      display:flex;align-items:center;gap:8px;
+    }
+
+    /* Small status dot used inside chips */
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--yellow);box-shadow:0 0 18px rgba(251,191,36,.35)}
+    .dot.ok{background:var(--green);box-shadow:0 0 18px rgba(52,211,153,.35)}
+
+    /* Main grid layout */
+    .grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    /* Card shell */
+    .card{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow:hidden;
+    }
+
+    /* Card header: title + right pill */
+    .cardHead{
+      padding:14px 16px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .cardTitle{display:flex;align-items:center;gap:10px;font-weight:650}
+
+    /* Small icon bubble on the left side of headers */
+    .icon{
+      width:28px;height:28px;border-radius:10px;
+      display:grid;place-items:center;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .cardBody{padding:16px;}
+
+    /* Generic row helper for inputs/buttons */
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+    /* Label + input grouping */
+    .field{
+      display:flex;flex-direction:column;gap:6px;min-width:190px;flex:1;
+    }
+
+    label{font-size:12px;color:var(--muted)}
+
+    /* Input styling */
+    input{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus{border-color: rgba(96,165,250,.55); box-shadow: 0 0 0 3px rgba(96,165,250,.12);}
+
+    /* Button base + variants */
+    .btn{
+      padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:var(--text);cursor:pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      font-weight:650;
+    }
+    .btn:hover{background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18);}
+    .btn:active{transform: translateY(1px);}
+
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(96,165,250,.95), rgba(167,139,250,.85));
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 50px rgba(96,165,250,.16);
+    }
+    .btn.danger{
+      background: linear-gradient(135deg, rgba(251,113,133,.90), rgba(251,191,36,.55));
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .btn.success{
+      background: linear-gradient(135deg, rgba(52,211,153,.92), rgba(96,165,250,.55));
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .btn.ghost{background: transparent;}
+
+    /* Small pill text used for status/metadata */
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      font-size:12px;color:var(--muted);
+    }
+    .pill strong{color:var(--text)}
+    .statusOk{color:var(--green)}
+    .statusBad{color:var(--red)}
+
+    /* Monospace output area (API responses, logs, etc.) */
+    .mono{
+      font-family: var(--mono);
+      font-size:12.5px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      line-height:1.45;
+    }
+
+    /* "Terminal-style" response console */
+    .console{
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:14px 14px;
+      min-height:220px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .consoleTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+
+    /* Fake macOS window dots */
+    .lights{display:flex;gap:6px}
+    .l{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.18)}
+    .l.r{background:rgba(251,113,133,.7)}
+    .l.y{background:rgba(251,191,36,.75)}
+    .l.g{background:rgba(52,211,153,.75)}
+
+    .small{font-size:12px;color:var(--muted)}
+
+    /* Orders preview table */
+    .table{
+      width:100%;
+      border-collapse:separate;border-spacing:0 10px;
+    }
+    .tr{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .tr td{padding:10px 12px;font-size:12.5px;color:var(--muted)}
+    .tr td strong{color:var(--text)}
+
+    /* Small badge used inside table cells */
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:12px;color:var(--muted);
+    }
+    .badge b{color:var(--text)}
+
+    /* Toast notification stack */
+    .toast{
+      position:fixed;right:16px;bottom:16px;
+      width:min(420px, calc(100vw - 32px));
+      display:flex;flex-direction:column;gap:10px;
+      z-index:999;
+    }
+    .toastItem{
+      padding:12px 12px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      animation: pop .18s ease;
+    }
+    @keyframes pop{from{transform:translateY(6px);opacity:.2}to{transform:translateY(0);opacity:1}}
+    .toastItem.ok{border-color: rgba(52,211,153,.35)}
+    .toastItem.bad{border-color: rgba(251,113,133,.35)}
+    .toastItem .t{font-weight:800;margin-bottom:4px}
+    .toastItem .d{font-size:12px;color:var(--muted)}
+
+    /* Small callout/hint blocks */
+    .hint{
+      margin-top:10px;
+      padding:10px 12px;border-radius:14px;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size:12px;
+    }
+
+    /* Two-column layout inside a card (login form) */
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 640px){ .split{grid-template-columns:1fr} }
+  </style>
+</head>
+
+<body>
+  <!-- Main page wrapper -->
+  <div class="wrap">
+
+    <!-- Sticky top header -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Backend Demo Dashboard</h1>
+          <div class="subtitle">JWT + Orders + Buy (txn/lock) + Cache + RateLimit + Celery Export</div>
+        </div>
+      </div>
+
+      <!-- Top right badges: token state, env, API base -->
+      <div class="chips">
+        <div class="chip">
+          <span class="dot" id="dotToken"></span>
+          Token <span id="tokenLabel">NOT SET</span>
+        </div>
+        <div class="chip"><span class="dot ok"></span> Env: Local</div>
+        <div class="chip"><span class="dot ok"></span> API Base: <span id="apiBaseTxt"></span></div>
+      </div>
+    </div>
+
+    <!-- Main layout grid -->
+    <div class="grid">
+
+      <!-- Card: Login + token handling -->
+      <div class="card">
+        <div class="cardHead">
+          <div class="cardTitle">
+            <div class="icon">🔐</div>
+            Login (JWT)
+          </div>
+          <div class="pill">Status: <strong id="authStatus">-</strong></div>
+        </div>
+
+        <div class="cardBody">
+          <!-- Username / password inputs -->
+          <div class="split">
+            <div class="field">
+              <label>Username</label>
+              <input id="username" value="user1" autocomplete="username" />
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input id="password" type="password" value="1234" autocomplete="current-password" />
+            </div>
+          </div>
+
+          <!-- Login controls -->
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" onclick="getToken()">Get Token</button>
+            <button class="btn ghost" onclick="refreshToken()">Refresh Token</button>
+            <button class="btn danger" onclick="logout()">Logout</button>
+            <span class="pill">access exp: <strong id="expTxt">-</strong></span>
+          </div>
+
+          <!-- Small helper note (kept as-is) -->
+          <div class="hint">
+            Note: This dashboard stores tokens in <b>localStorage</b>. If access expires, Refresh can recover it.
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Buttons for calling API endpoints -->
+      <div class="card">
+        <div class="cardHead">
+          <div class="cardTitle">
+            <div class="icon">⚡</div>
+            Quick Actions
+          </div>
+          <div class="pill">Latency: <strong id="latTxt">-</strong></div>
+        </div>
+
+        <div class="cardBody">
+          <!-- Buy endpoints -->
+          <div class="row">
+            <div class="field" style="max-width:140px">
+              <label>product_id</label>
+              <input id="productId" value="2" />
+            </div>
+            <button class="btn success" onclick="buy()">Buy Product</button>
+            <button class="btn" onclick="buyInvalid()">Buy Invalid (404)</button>
+            <button class="btn" onclick="buyOutOfStock()">Out of Stock (409)</button>
+          </div>
+
+          <!-- Orders list (pagination + rate-limit demo) -->
+          <div class="row" style="margin-top:12px">
+            <div class="field" style="max-width:120px">
+              <label>page</label>
+              <input id="page" value="1" />
+            </div>
+            <div class="field" style="max-width:120px">
+              <label>limit</label>
+              <input id="limit" value="50" />
+            </div>
+            <button class="btn" onclick="loadOrders()">Load Orders</button>
+            <button class="btn" onclick="spamRateLimit()">Spam (429)</button>
+          </div>
+
+          <!-- Celery export + task status check -->
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" onclick="exportOrders()">Export Orders (Celery)</button>
+            <div class="field">
+              <label>task_id (for status)</label>
+              <input id="taskId" placeholder="paste task_id here..." />
+            </div>
+            <button class="btn" onclick="checkTask()">Check Task</button>
+          </div>
+
+          <!-- Concurrency test (two requests at once) -->
+          <div class="row" style="margin-top:12px">
+            <button class="btn" onclick="concurrency2()">Concurrency (2 buys at once)</button>
+            <span class="pill">Goal: crush race conditions with a DB lock ✅</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Response output console -->
+      <div class="card">
+        <div class="cardHead">
+          <div class="cardTitle"><div class="icon">🧾</div> Response Console</div>
+          <div class="pill">HTTP: <strong id="httpTxt">-</strong></div>
+        </div>
+        <div class="cardBody">
+          <div class="console">
+            <div class="consoleTop">
+              <div class="lights">
+                <span class="l r"></span><span class="l y"></span><span class="l g"></span>
+              </div>
+              <div class="small">Pretty JSON + timing + errors</div>
+            </div>
+            <!-- JS writes API responses here -->
+            <div class="mono" id="out">Waiting...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card: Small preview of orders list (first 8 rows) -->
+      <div class="card">
+        <div class="cardHead">
+          <div class="cardTitle"><div class="icon">📦</div> Orders Preview</div>
+          <div class="pill">Rows: <strong id="rowsTxt">0</strong></div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="ordersTable">
+            <tbody></tbody>
+          </table>
+          <div class="hint">
+             Only show the first 8 rows here to keep it light. Full data is in the Console.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Toast notifications will be injected here -->
+    <div class="toast" id="toast"></div>
+  </div>
+<script>
+  const API_BASE = window.location.origin; // same host
+  document.getElementById("apiBaseTxt").textContent = API_BASE;
+
+  const ls = {
+    get(k){ try{return localStorage.getItem(k)}catch(e){return null} },
+    set(k,v){ try{localStorage.setItem(k,v)}catch(e){} },
+    del(k){ try{localStorage.removeItem(k)}catch(e){} }
+  };
+
+  function toast(title, detail, ok=true){
+    const wrap = document.getElementById("toast");
+    const el = document.createElement("div");
+    el.className = "toastItem " + (ok ? "ok" : "bad");
+    el.innerHTML = `<div class="t">${title}</div><div class="d">${detail||""}</div>`;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.style.opacity = "0"; el.style.transform="translateY(6px)"; }, 2600);
+    setTimeout(()=>{ wrap.removeChild(el); }, 3100);
+  }
+
+  function setOut(obj, status, ms){
+    document.getElementById("httpTxt").textContent = status ?? "-";
+    document.getElementById("latTxt").textContent = (ms!=null ? `${ms}ms` : "-");
+    document.getElementById("out").textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+  }
+
+  function setTokenUI(){
+    const access = ls.get("access");
+    const refresh = ls.get("refresh");
+    const dot = document.getElementById("dotToken");
+    const label = document.getElementById("tokenLabel");
+    if(access){
+      dot.classList.add("ok");
+      label.textContent = "SET ✅";
+      document.getElementById("authStatus").textContent = "AUTH READY";
+    }else{
+      dot.classList.remove("ok");
+      label.textContent = "NOT SET";
+      document.getElementById("authStatus").textContent = "NO TOKEN";
+    }
+    // show exp from JWT (best effort)
+    document.getElementById("expTxt").textContent = jwtExp(access) || "-";
+  }
+
+  function jwtExp(token){
+    try{
+      if(!token) return null;
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if(!payload.exp) return null;
+      const d = new Date(payload.exp * 1000);
+      return d.toLocaleTimeString();
+    }catch(e){ return null; }
+  }
+
+  async function apiFetch(path, opts={}){
+    const access = ls.get("access");
+    const headers = Object.assign({}, opts.headers || {});
+    if(access) headers["Authorization"] = "Bearer " + access;
+    if(opts.json){
+      headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(opts.json);
+    }
+    opts.headers = headers;
+
+    const t0 = performance.now();
+    const res = await fetch(API_BASE + path, opts);
+    const ms = Math.round(performance.now() - t0);
+
+    let data = null;
+    try{ data = await res.json(); }catch(e){ data = await res.text(); }
+    return {res, data, ms};
+  }
+
+  async function getToken(){
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    const {res, data, ms} = await apiFetch("/api/token/", {method:"POST", json:{username, password}});
+    setOut(data, res.status, ms);
+
+    if(res.ok){
+      ls.set("access", data.access);
+      ls.set("refresh", data.refresh);
+      setTokenUI();
+      toast("Login OK", "JWT tokens stored ✅", true);
+    }else{
+      toast("Login Failed", (data && data.detail) ? data.detail : "check credentials", false);
+    }
+  }
+
+  async function refreshToken(){
+    const refresh = ls.get("refresh");
+    if(!refresh){ toast("No refresh token", "Login first", false); return; }
+
+    const {res, data, ms} = await apiFetch("/api/token/refresh/", {method:"POST", json:{refresh}});
+    setOut(data, res.status, ms);
+
+    if(res.ok){
+      ls.set("access", data.access);
+      setTokenUI();
+      toast("Refreshed", "New access token ✅", true);
+    }else{
+      toast("Refresh failed", "Login again", false);
+    }
+  }
+
+  function logout(){
+    ls.del("access"); ls.del("refresh");
+    setTokenUI();
+    setOut({ok:true, message:"Logged out"}, 200, 0);
+    toast("Logged out", "Tokens cleared", true);
+  }
+
+  async function buy(){
+    const product_id = Number(document.getElementById("productId").value);
+    const {res, data, ms} = await apiFetch("/api/buy/", {method:"POST", json:{product_id}});
+    setOut(data, res.status, ms);
+    if(res.ok) toast("Buy OK", `order_id=${data.order_id} stock=${data.remaining_stock}`, true);
+    else toast("Buy Failed", JSON.stringify(data), false);
+  }
+
+  async function buyInvalid(){
+    const {res, data, ms} = await apiFetch("/api/buy/", {method:"POST", json:{product_id: 99999999}});
+    setOut(data, res.status, ms);
+    toast("Expected Error", "Invalid product => should be 404/400", !res.ok ? true : false);
+  }
+
+  async function buyOutOfStock(){
+    // product 1 usually is 0 in your tests; change if needed
+    const {res, data, ms} = await apiFetch("/api/buy/", {method:"POST", json:{product_id: 1}});
+    setOut(data, res.status, ms);
+    toast("Expected Error", "OUT_OF_STOCK => 409", res.status === 409);
+  }
+
+  async function loadOrders(){
+    const page = Number(document.getElementById("page").value || 1);
+    const limit = Number(document.getElementById("limit").value || 50);
+    const {res, data, ms} = await apiFetch(`/api/orders/?page=${page}&limit=${limit}&ordering=-created_at`, {method:"GET"});
+    setOut(data, res.status, ms);
+
+    if(res.ok){
+      toast("Orders Loaded", `count=${data.count} page=${page}`, true);
+      renderOrders(data.results || []);
+    }else{
+      toast("Orders Failed", JSON.stringify(data), false);
+    }
+  }
+
+  function renderOrders(results){
+    const tbody = document.querySelector("#ordersTable tbody");
+    tbody.innerHTML = "";
+    const show = (results || []).slice(0, 8);
+    document.getElementById("rowsTxt").textContent = show.length;
+
+    for(const o of show){
+      const items = (o.items || []).length;
+      const row = document.createElement("tr");
+      row.className = "tr";
+      row.innerHTML = `
+        <td><span class="badge">#<b>${o.id}</b></span></td>
+        <td><strong>$${o.total_price}</strong><div class="small">${o.created_at}</div></td>
+        <td><span class="badge">Items: <b>${items}</b></span></td>
+      `;
+      tbody.appendChild(row);
+    }
+  }
+
+  async function exportOrders(){
+    // depending on your router path, adjust:
+    // common: /api/orders/export/ OR /api/reports/orders/export/
+    const tryPaths = ["/api/reports/orders/export/"];
+
+    for(const p of tryPaths){
+      const {res, data, ms} = await apiFetch(p, {method:"POST"});
+      if(res.ok){
+        setOut(data, res.status, ms);
+        document.getElementById("taskId").value = data.task_id || "";
+        toast("Export started", `task_id=${data.task_id}`, true);
+        return;
+      }
+      // if 405 on POST, we try GET once
+      if(res.status === 405){
+        const alt = await apiFetch(p, {method:"GET"});
+        if(alt.res.ok){
+          setOut(alt.data, alt.res.status, alt.ms);
+          document.getElementById("taskId").value = alt.data.task_id || "";
+          toast("Export started", `task_id=${alt.data.task_id}`, true);
+          return;
+        }
+      }
+    }
+
+    toast("Export failed", "Check your export endpoint path/method", false);
+  }
+
+  async function checkTask(){
+    const task_id = document.getElementById("taskId").value.trim();
+    if(!task_id){ toast("No task_id", "Paste task_id first", false); return; }
+
+    // common: /api/orders/export/status/?task_id=...
+    const paths = [
+      `/api/reports/orders/export/status/?task_id=${encodeURIComponent(task_id)}`,
+    ];
+
+    for(const p of paths){
+      const {res, data, ms} = await apiFetch(p, {method:"GET"});
+      if(res.ok){
+        setOut(data, res.status, ms);
+        toast("Task status", data.status || "OK", true);
+        return;
+      }
+    }
+    toast("Status failed", "Check status endpoint path", false);
+  }
+
+  async function concurrency2(){
+    const product_id = Number(document.getElementById("productId").value);
+    const t0 = performance.now();
+
+    const r1 = apiFetch("/api/buy/", {method:"POST", json:{product_id}});
+    const r2 = apiFetch("/api/buy/", {method:"POST", json:{product_id}});
+    const [a,b] = await Promise.all([r1,r2]);
+    const total = Math.round(performance.now() - t0);
+
+    const out = {
+      status: "DONE",
+      total_duration_ms: total,
+      request1: {status: a.res.status, body: a.data},
+      request2: {status: b.res.status, body: b.data},
+    };
+    setOut(out, 200, total);
+
+    const ok = a.res.ok && b.res.ok;
+    toast("Concurrency Test", ok ? "Both succeeded ✅ lock ok" : "One failed (can be out of stock)", ok);
+  }
+
+  async function spamRateLimit(){
+    // hit orders multiple times quickly to show 429
+    const page = Number(document.getElementById("page").value || 1);
+    const limit = Number(document.getElementById("limit").value || 50);
+
+    let last = null;
+    for(let i=0;i<40;i++){
+      last = await apiFetch(`/api/orders/?page=${page}&limit=${limit}`, {method:"GET"});
+      if(last.res.status === 429) break;
+    }
+    setOut(last.data, last.res.status, last.ms);
+    toast("RateLimit", "Expected 429 after spam", last.res.status === 429);
+  }
+
+  // On load
+  setTokenUI();
+</script>
+</body>
+</html>
