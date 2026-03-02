@@ -1,5 +1,9 @@
 # Backend Shop – Django REST Demo (Docker + Postgres + Redis + Celery)
 
+## Dashboard Preview
+
+![Backend Demo Dashboard](assets/dashboard.png)
+
 Backend-first Django project built to show practical backend work:
 JWT auth, concurrency-safe purchases, caching, rate limiting, async export with Celery, request tracing, and a small demo dashboard to trigger flows fast.
 
