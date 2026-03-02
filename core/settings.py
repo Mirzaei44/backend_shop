@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'shop',
     "django_filters",
     "rest_framework",
+    "drf_spectacular",
 ]
 
 # Django REST Framework defaults:
@@ -53,6 +54,13 @@ REST_FRAMEWORK = {
         "anon": "20/min",
         "user": "60/min",
     },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Backend Shop API",
+    "DESCRIPTION": "JWT auth + Orders + Buy (transaction/lock) + Cache/RateLimit + Celery export.",
+    "VERSION": "1.0.0",
 }
 
 MIDDLEWARE = [
